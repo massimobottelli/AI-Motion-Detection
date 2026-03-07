@@ -1,75 +1,68 @@
 # 🛡️ AI Motion Guard: Smart Detection & Recognition
 
-**AI Motion Guard** è un sistema di videosorveglianza intelligente che combina la velocità della **Motion Detection** tradizionale con la precisione del Deep Learning tramite **YOLO**. 
+**AI Motion Guard** is an intelligent video surveillance system that combines high-speed traditional **Motion Detection** with the precision of Deep Learning via **YOLO**. 
 
-A differenza dei sistemi standard, questa applicazione riduce drasticamente i falsi positivi analizzando il contenuto video solo quando viene rilevato un movimento reale e attendendo il momento ottimale (1 secondo di delay) per identificare l'oggetto, garantendo che sia ben visibile nell'inquadratura.
-
----
-
-## ✨ Caratteristiche Principali
-
-* **Rilevamento Ibrido:** Motion detection ultra-veloce (OpenCV MOG2) unita a Object Recognition (YOLO).
-* **Analisi Ritardata (Smart Trigger):** L'IA interviene dopo 1 secondo dall'inizio del movimento per catturare l'immagine migliore.
-* **Registrazione Automatica:** Salva file `.mp4` solo durante l'evento, ottimizzando lo spazio su disco.
-* **Auto-Naming:** I video vengono rinominati automaticamente con il timestamp e l'oggetto riconosciuto (es. `20260307-1830_person.mp4`).
-* **Architettura Modulare:** Codice organizzato in classi separate per Visione, Registrazione e Monitoraggio.
-* **Streaming UDP:** Supporto nativo per flussi video remoti (es. da un Raspberry Pi).
+Unlike standard systems, this application drastically reduces false positives by analyzing video content only when real motion is detected. It utilizes a strategic 1-second delay from the initial trigger to ensure the object is fully visible and centered before performing AI recognition.
 
 ---
 
-## 🛠️ Requisiti
+## ✨ Key Features
+
+* **Hybrid Detection:** Ultra-fast motion detection (OpenCV MOG2) paired with Object Recognition (YOLO).
+* **Smart Trigger (Delayed Analysis):** AI kicks in 1 second after motion starts to capture the best possible frame for identification.
+* **Automated Recording:** Saves `.mp4` files only during active events, optimizing disk space.
+* **Auto-Naming:** Videos are automatically renamed using a timestamp and the detected object label (e.g., `20260307-1830_person.mp4`).
+* **Modular Architecture:** Clean, class-based Python code separating Vision, Recording, and Monitoring logic.
+* **UDP Streaming Support:** Native support for remote video feeds (e.g., from a Raspberry Pi).
+
+---
+
+## 🛠️ Requirements
 
 ### Software
 * **Python 3.9+**
-* **GStreamer 1.0** (con plugin `ugly` e `good` per il supporto H.264)
-* Librerie Python:
+* **GStreamer 1.0** (with `ugly` and `good` plugins for H.264 support)
+* **Python Libraries:**
     ```bash
     pip install opencv-python numpy ultralytics PyGObject
     ```
 
-### Hardware (Consigliato)
-* **IP Camera** o **Raspberry Pi** con webcam USB.
-* PC con CPU moderna o GPU NVIDIA (opzionale) per un'inferenza YOLO più veloce.
+### Hardware (Recommended)
+* **IP Camera** or **Raspberry Pi** with a USB webcam.
+* PC with a modern CPU or NVIDIA GPU (optional) for faster YOLO inference.
 
 ---
 
-## 🚀 Installazione e Avvio
+## ⚙️ Configuration (Parameters)
 
-1. **Clona il repository:**
-   ```bash
-   git clone [https://github.com/tuo-username/ai-motion-guard.git](https://github.com/tuo-username/ai-motion-guard.git)
-   cd ai-motion-guard
-Configura il flusso video:
-Assicurati che la tua sorgente video trasmetta sulla porta UDP 5000.
+Key parameters are centralized in the `CONFIG` dictionary within the code:
 
-Avvia l'applicazione:
+| Parameter            | Description                                              | Default |
+| :------------------- | :------------------------------------------------------- | :------ |
+| `threshold`          | Motion sensitivity (lower = more sensitive)              | 250     |
+| `min_area`           | Minimum pixel size of an object to trigger recording     | 1500    |
+| `recognition_delay`  | Seconds to wait before YOLO analyzes the frame           | 1.0     |
+| `cooldown`           | Seconds of no motion before closing the video file       | 2.0     |
 
-Bash
-python main.py
-⚙️ Configurazione (Parametri)
-I parametri principali sono centralizzati nel dizionario CONFIG all'interno del codice:
+---
 
-Parametro	Descrizione	Default
-threshold	Sensibilità al movimento (più basso = più sensibile)	250
-min_area	Dimensione minima in pixel dell'oggetto per attivare la REC	1500
-recognition_delay	Secondi di attesa prima dell'intervento di YOLO	1.0
-cooldown	Secondi di assenza di movimento prima di chiudere il video	2.0
-🎥 Streaming da Raspberry Pi
-Per inviare il video dal tuo Raspberry Pi al sistema, usa questo comando:
+## 🎥 Raspberry Pi Streaming Setup
 
-Bash
+To stream video from your Raspberry Pi to the system, use the following GStreamer command:
+
+```bash
 gst-launch-1.0 v4l2src device=/dev/video0 ! \
     video/x-raw,width=640,height=360,framerate=20/1 ! \
     videoconvert ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast ! \
     rtph264pay config-interval=1 ! \
-    udpsink host=INDIRIZZO_IP_PC port=5000
-⌨️ Comandi Rapidi (Hotkeys)
-Durante l'esecuzione, puoi interagire con la dashboard:
+    udpsink host=YOUR_PC_IP_ADDRESS port=5000
+⌨️ Hotkeys
+While the dashboard is running, you can use the following keys:
 
-Q: Esci dall'applicazione.
+Q: Quit the application.
 
-S: Salva i parametri attuali.
+S: Save current parameters (Threshold & Area).
 
-Freccia SU/GIÙ: Regola la soglia di sensibilità.
+UP/DOWN Arrows: Adjust Motion Threshold.
 
-Freccia DX/SX: Regola l'area minima di rilevamento.
+LEFT/RIGHT Arrows: Adjust Minimum Area.
