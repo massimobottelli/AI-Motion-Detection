@@ -4,7 +4,7 @@
 
 Unlike standard systems, this application drastically reduces false positives by analyzing video content only when real motion is detected. It utilizes a strategic 1-second delay from the initial trigger to ensure the object is fully visible and centered before performing AI recognition.
 
----
+
 
 ## ✨ Key Features
 
@@ -15,7 +15,7 @@ Unlike standard systems, this application drastically reduces false positives by
 * **Modular Architecture:** Clean, class-based Python code separating Vision, Recording, and Monitoring logic.
 * **UDP Streaming Support:** Native support for remote video feeds (e.g., from a Raspberry Pi).
 
----
+
 
 ## 🛠️ Requirements
 
@@ -31,7 +31,7 @@ Unlike standard systems, this application drastically reduces false positives by
 * **IP Camera** or **Raspberry Pi** with a USB webcam.
 * PC with a modern CPU or NVIDIA GPU (optional) for faster YOLO inference.
 
----
+
 
 ## ⚙️ Configuration (Parameters)
 
@@ -44,7 +44,7 @@ Key parameters are centralized in the `CONFIG` dictionary within the code:
 | `recognition_delay`  | Seconds to wait before YOLO analyzes the frame           | 1.0     |
 | `cooldown`           | Seconds of no motion before closing the video file       | 2.0     |
 
----
+
 
 ## 🎥 Raspberry Pi Streaming Setup
 
