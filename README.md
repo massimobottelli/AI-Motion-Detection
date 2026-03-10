@@ -56,13 +56,4 @@ gst-launch-1.0 v4l2src device=/dev/video0 ! \
     videoconvert ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast ! \
     rtph264pay config-interval=1 ! \
     udpsink host=YOUR_PC_IP_ADDRESS port=5000
-⌨️ Hotkeys
-While the dashboard is running, you can use the following keys:
 
-Q: Quit the application.
-
-S: Save current parameters (Threshold & Area).
-
-UP/DOWN Arrows: Adjust Motion Threshold.
-
-LEFT/RIGHT Arrows: Adjust Minimum Area.
