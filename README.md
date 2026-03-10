@@ -5,7 +5,6 @@
 Unlike standard systems, this application drastically reduces false positives by analyzing video content only when real motion is detected. It utilizes a strategic 1-second delay from the initial trigger to ensure the object is fully visible and centered before performing AI recognition.
 
 
-
 ## ✨ Key Features
 
 * **Hybrid Detection:** Ultra-fast motion detection (OpenCV MOG2) paired with Object Recognition (YOLO).
