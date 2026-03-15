@@ -9,6 +9,11 @@ from ultralytics import YOLO
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
+# Silenzia i log di TensorFlow e avvisi vari
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import warnings
+warnings.filterwarnings("ignore")
+
 Gst.init(None)
 
 # --- GLOBAL CONFIGURATION ---
@@ -22,7 +27,7 @@ CONFIG = {
     },
     "motion": {
         "threshold": 250,
-        "min_area": 1500,
+        "min_area": 1200,
         "cooldown": 2.0,
         "history": 500
     },
@@ -80,7 +85,6 @@ class VisionEngine:
         x, y, w, h = cv2.boundingRect(largest_cnt)
         pad = self.cfg["crop_padding"]
         
-        # Parametric crop with bounds checking
         h_max, w_max = frame.shape[:2]
         y1, y2 = max(0, y-pad), min(h_max, y+h+pad)
         x1, x2 = max(0, x-pad), min(w_max, x+w+pad)
@@ -99,7 +103,6 @@ class MotionMonitorApp:
         self.vision = VisionEngine(self.cfg["ai"])
         self.recorder = VideoRecorder(self.cfg["video"])
         
-        # Parametric background subtractor
         self.back_sub = cv2.createBackgroundSubtractorMOG2(
             history=self.cfg["motion"]["history"], 
             varThreshold=self.cfg["motion"]["threshold"]
@@ -147,7 +150,14 @@ class MotionMonitorApp:
                 if self.current_frame is None: continue
                 
                 now = time.time()
+                # Creiamo il frame base e aggiungiamo IMMEDIATAMENTE il timestamp
                 frame = self.current_frame.copy()
+                
+                # --- AGGIUNTA DATA E ORA ---
+                timestamp_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                # Posizionato in basso a sinistra (x=10, y=altezza-10)
+                cv2.putText(frame, timestamp_str, (10, self.cfg["video"]["height"] - 10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                 
                 # 1. Motion Logic
                 self.back_sub.setVarThreshold(m_cfg["threshold"])
@@ -165,34 +175,45 @@ class MotionMonitorApp:
                     self.last_motion_time = now
 
                 if self.is_recording:
-                    # Delayed Recognition
                     if not self.yolo_done and (now - self.first_motion_time >= ai_cfg["recognition_delay"]):
                         label = self.vision.detect(frame, valid_cnts)
                         if label:
                             self.detections.append(label)
                             self.yolo_done = True
 
-                    # Frame writing
                     if (now - self.last_save_time) >= (1.0 / self.recorder.fps):
                         self.recorder.write(frame)
                         self.last_save_time = now
                     
-                    # Cooldown logic
                     if (now - self.last_motion_time) > m_cfg["cooldown"]:
                         self.recorder.stop(self.detections)
                         self.is_recording = False
                         self.yolo_done = False
                         self.detections = []
 
+                # Render UI (passiamo il frame già marchiato col timestamp)
                 self._show_ui(frame, valid_cnts, now)
-                if (cv2.waitKey(1) & 0xFF) == ord('q'): break
+
+                # 3. Key Handling
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    break
+                elif key == 82: # SU
+                    m_cfg["threshold"] += 50
+                elif key == 84: # GIU
+                    m_cfg["threshold"] = max(10, m_cfg["threshold"] - 50)
+                elif key == 83: # DX
+                    m_cfg["min_area"] += 100
+                elif key == 81: # SX
+                    m_cfg["min_area"] = max(100, m_cfg["min_area"] - 100)
+
         finally:
             self.pipeline.set_state(Gst.State.NULL)
             cv2.destroyAllWindows()
 
     def _show_ui(self, frame, contours, now):
         ui = frame.copy()
-        cv2.rectangle(ui, (0, 0), (280, 85), (0, 0, 0), -1)
+        cv2.rectangle(ui, (0, 0), (300, 85), (0, 0, 0), -1)
         if contours: cv2.drawContours(ui, contours, -1, (0, 255, 0), -1)
         cv2.addWeighted(ui, 0.3, frame, 0.7, 0, frame)
         
@@ -203,10 +224,12 @@ class MotionMonitorApp:
         m_cfg = self.cfg["motion"]
         cv2.putText(frame, f"THR: {m_cfg['threshold']} | AREA: {m_cfg['min_area']}", (10, 30), 1, 1, (255, 255, 0), 1)
         cv2.putText(frame, f"DETECTED: {status}", (10, 65), 1, 1, (0, 255, 255), 1)
-        if self.is_recording: cv2.circle(frame, (610, 30), 7, (0, 0, 255), -1)
+        
+        if self.is_recording: 
+            cv2.circle(frame, (610, 30), 7, (0, 0, 255), -1)
+            
         cv2.imshow("AI Monitor", frame)
 
 if __name__ == "__main__":
-    # Injected configuration
     app = MotionMonitorApp(CONFIG)
     app.run()
